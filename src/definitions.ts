@@ -112,6 +112,11 @@ export interface ScanOptions {
    * @since 2.1.0
    */
   cameraDirection?: CameraDirection;
+
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface StopScanOptions {
@@ -151,6 +156,11 @@ export interface IScanResultWithContent {
    * @since 2.1.0
    */
   format: string;
+
+  /**
+   * Interpreted raw data (with support GS1)
+   */
+  raw?: string;
 }
 
 export interface IScanResultWithoutContent {
@@ -176,6 +186,11 @@ export interface IScanResultWithoutContent {
    * @since 2.1.0
    */
   format: undefined;
+
+  /**
+   * Interpreted raw data (with support GS1)
+   */
+  raw: undefined;
 }
 
 export interface CheckPermissionOptions {

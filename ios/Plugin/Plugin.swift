@@ -127,7 +127,13 @@ public class BarcodeScanner: CAPPlugin, AVCaptureMetadataOutputObjectsDelegate {
     }
 
     public override func load() {
-        self.cameraView = CameraView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height))
+        let coordX = self.savedCall?.getInt("x")
+        let coordY = self.savedCall?.getInt("y")
+        let width = self.savedCall?.getInt("width")
+        let height = self.savedCall?.getInt("height")
+        
+        self.cameraView = CameraView(frame: CGRect(x: coordX ?? 0, y: coordY ?? 0, width: width ?? UIScreen.main.bounds.width, height: height ?? UIScreen.main.bounds.height))
+        
         self.cameraView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
     }
 
@@ -143,7 +149,8 @@ public class BarcodeScanner: CAPPlugin, AVCaptureMetadataOutputObjectsDelegate {
         do {
             var cameraDir = cameraDirection
             cameraView.backgroundColor = UIColor.clear
-            self.webView!.superview!.insertSubview(cameraView, belowSubview: self.webView!)
+            //self.webView!.superview!.insertSubview(cameraView, belowSubview: self.webView!)
+            cameraView?.superview?.bringSubviewToFront(cameraView!)
             
             let availableVideoDevices =  discoverCaptureDevices()
             for device in availableVideoDevices {
@@ -370,6 +377,20 @@ public class BarcodeScanner: CAPPlugin, AVCaptureMetadataOutputObjectsDelegate {
                 jsObject["hasContent"] = true
                 jsObject["content"] = found.stringValue
                 jsObject["format"] = formatStringFromMetadata(found.type)
+
+                var data = nil
+                var foundFNC1 = false
+                if (found.type == AVMetadataObject.ObjectType.qr){
+                    data = (found.descriptor as CIQRCodeDescriptor).errorCorrectedPayload
+                    foundFNC1 = (data.getBytes(1) >> 4) == 5
+                } else if (found.type == AVMetadataObject.ObjectType.dataMatrix){
+                    data = (found.descriptor as CIDataMatrixCodeDescriptor).errorCorrectedPayload
+                    foundFNC1 = data.getBytes(1) == 232
+                }
+                if (data) {
+                    jsObject["raw"] = (foundFNC1 ? "FNC1" : "")
+                    + found.stringValue?.replacingOccurrences(of:"\u{001D}", with: "<GS>")
+                }
             } else {
                 jsObject["hasContent"] = false
             }
